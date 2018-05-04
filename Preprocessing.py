@@ -89,6 +89,11 @@ def WordEmbedding(words, embedding_method='word2vec'):
     return words
 """
 
+def w2v(word, model):
+    try:
+        return model[word]
+    except:
+        return np.zeros((1, 400))
 
 def tweet_preprocessing(tweets, model):
     '''
@@ -99,7 +104,7 @@ def tweet_preprocessing(tweets, model):
     # tokenization and replace URL, NUMBERs and MENTION with special tokens
     tweets = list(map(lambda t: simple_tokenize(t), tweets))  # list: (#tweets, list_of_words)
     # embedding
-    embeddings = list(map(lambda tweet: np.array(list(map(lambda w: model[w], tweet))), tweets))   # list: (#tweets, np.array(#words, #dim))
+    embeddings = list(map(lambda tweet: np.array(list(map(lambda w: w2v(w, model), tweet))), tweets))   # list: (#tweets, np.array(#words, #dim))
     # padding
     max_words = max(list(map(lambda t: len(t), tweets)))
     paddings = np.array(list(map(lambda x: np.pad(x, ((0, max_words - x.shape[0]), (0, 0)), 'constant', constant_values=(0, 0)), embeddings)))
