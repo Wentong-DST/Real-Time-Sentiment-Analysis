@@ -24,8 +24,9 @@ def train(net, train_data, use_cuda):
     optimizer.step()
 
     _, predicted = torch.max(outputs.data, 1)
-    correct = predicted.eq(y.data).cpu().sum()
-    return loss[0], correct
+    _, targets = torch.max(y.data, 1)
+    correct = predicted.eq(targets).sum()
+    return loss.item(), correct
 
 def test(net, test_data, use_cuda):
     net.eval()
@@ -41,10 +42,11 @@ def test(net, test_data, use_cuda):
 
     total = len(x)
     _, predicted = torch.max(outputs.data, 1)
-    correct = predicted.eq(y.data).cpu().sum()
+    _, targets = torch.max(y.data, 1)
+    correct = predicted.eq(targets).sum()
 
-    print 'Test loss: %.3f | Acc: %.3f%% (%d/%d)' % (
-        loss.data[0], 100.0 * correct / total, correct, total)
+    return 'Test loss: %.3f | Acc: %.3f%% (%d/%d) \n' % (
+        loss.item(), 100.0 * correct / total, correct, total)
 
 
 

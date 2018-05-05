@@ -20,7 +20,7 @@ class lstm(nn.Module):
             self.mlp.add_module('mlp'+str(i), nn.Linear(mlp_hidden[i], mlp_hidden[i+1]))
             self.mlp.add_module('activ'+str(i), nn.Sigmoid())
             self.mlp.add_module('dropout'+str(i), nn.Dropout(args.dropout))
-        self.mlp.add_module('mlp'+str(i+1), nn.Linear(mlp_hidden[i], args.num_classes))
+        self.mlp.add_module('mlp'+str(i+1), nn.Linear(mlp_hidden[i+1], args.num_classes))
         self.mlp.add_module('softmax', nn.Softmax())
 
     def forward(self, x):
@@ -34,6 +34,6 @@ class lstm(nn.Module):
         x = torch.sum(attn_weights*x, dim=1)
 
         # mlp prediction
-        x = self.mlp(self.dropout(x[0].squeeze(1)))
+        x = self.mlp(self.dropout(x))
 
         return x
