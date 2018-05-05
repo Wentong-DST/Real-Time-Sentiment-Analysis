@@ -14,7 +14,7 @@ def label_transfer(label):
     else:
         return [0, 1]
 
-def divide_dataset(filename):
+def divide_dataset(filename, ratio):
     if not os.path.exists(filename):
         print 'file %s does not exist. Please correct the name and try again.' % filename
 
@@ -26,20 +26,43 @@ def divide_dataset(filename):
     parser = lambda date: pd.datetime.strptime(date[:20]+date[24:], '%c')
     columns = ['polarity', 'id', 'date', 'query', 'user', 'text']
     df = pd.read_csv(filename, index_col=1, names=columns, parse_dates=[2], date_parser=parser) # tweet id as index
-    if len(set(df['polarity'])) == 2:
-        df['polarity'] = df['polarity'].apply(lambda x:x/4)
-    # elif len(set(df['polarity'])) == 3:
-    #     df['polarity'] = df['polarity'].apply(lambda x:x/2)
+    categories = len(set(df['polarity']))
+    if categories == 2:
+        df['polarity'] = df['polarity'].apply(lambda x: x/4.0)
+    elif categories == 3:
+        df['polarity'] = df['polarity'].apply(lambda x: x/2.0)
 
-    texts = df['text'].tolist()
-    labels = np.array(map(lambda l: label_transfer(l), df['polarity'].tolist()))
+    texts = df['text']
+    labels = df['polarity']
+    # get index for negative and positive samples
+    neg_idx = labels.index[labels==0]
+    if categories == 2:
+        pos_idx = labels.index[labels==1]
+    elif categories == 3:
+        pos_idx = labels.index[labels==2]
 
-    num_examples = len(texts)
-    row = int(num_examples * 0.8)
-    train_texts = texts[:row]
-    train_labels = labels[:row]
-    test_texts = texts[row:]
-    test_labels = labels[row:]
+    num_neg = len(neg_idx)
+    num_pos = len(pos_idx)
+    train_num_neg = int(num_neg * ratio)
+    train_num_pos = int(num_pos * ratio)
+
+    train_idx = neg_idx.tolist()[:train_num_neg] + pos_idx.tolist()[:train_num_pos]
+    test_idx = list(set(neg_idx.tolist() + pos_idx.tolist()) - set(train_idx))
+    # shuffle train samples
+    tmp = np.arange(len(train_idx))
+    np.random.shuffle(tmp)
+    train_idx = np.array(train_idx)[tmp]
+    train_texts = texts[train_idx]
+    train_labels = labels[train_idx]
+    train_labels = np.array(map(lambda l: label_transfer(l), train_labels.tolist()))
+
+    # shuffle test samples
+    tmp = np.arange(len(test_idx))
+    np.random.shuffle(tmp)
+    test_idx = np.array(test_idx)[tmp]
+    test_texts = texts[test_idx]
+    test_labels = labels[test_idx]
+    test_labels = np.array(map(lambda l: label_transfer(l), test_labels.tolist()))
 
     return (train_texts, train_labels), (test_texts, test_labels)
 
