@@ -53,7 +53,7 @@ def train_model(args, model_choice):
         print "Wrong model_choice, please correct and try again."
         return
 
-    print 'Train model %s' % model_choice
+    all_info = 'Train model %s \n' % model_choice
 
     # loading data and divide
     # filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
@@ -61,33 +61,53 @@ def train_model(args, model_choice):
     train_set, test_set = divide_dataset(filename)
 
     # loading word2vec model
-    #model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
-    #model = Word2Vec.load_word2vec_format(model_path, binary=True)
-    model= []
-    # train_set[0] = tweet_preprocessing(train_set[0], model)
+    model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
+    model = Word2Vec.load_word2vec_format(model_path, binary=True)
+    #model= []
 
     batch_size = args.batch_size
     xtrain, ytrain = train_set
+    xtest, ytest = test_set
+    xtest = tweet_preprocessing(xtest, model)
     num_batch = len(xtrain) / batch_size
-    for i in range(num_batch):
-        # get data for each batch
-        x = xtrain[i*batch_size: (i+1)*batch_size]
-        y = ytrain[i*batch_size: (i+1)*batch_size]
 
-        # process data
-        start = time.time()
-        x = tweet_preprocessing(x, model)
-        print 'processing batch_size = %d, time spend = %d' % (batch_size, time.time()-start),
+    for epoch in range(args.max_epochs):
+        info = 'Epoch %d \n' % epoch
+        train_loss, train_correct = 0, 0
+        process_time, train_time = 0, 0
+        for i in range(num_batch):
+            # get data for each batch
+            x = xtrain[i*batch_size: (i+1)*batch_size]
+            y = ytrain[i*batch_size: (i+1)*batch_size]
 
-        # simulate one batch
-        start = time.time()
-        train(net, (x,y), False)
-        print 'train model %s, time spend = %d' % (model_choice, time.time()-start)
+            # process data
+            start = time.time()
+            x = tweet_preprocessing(x, model)
+            process_time += (time.time() - start)
+            # print 'processing batch_size = %d, time spend = %d' % (batch_size, time.time()-start),
 
-    test(net, test_set, False)
+            # simulate one batch
+            start = time.time()
+            loss, correct = train(net, (x,y), False)
+            train_time += (time.time() - start)
+            train_loss += loss
+            train_correct += correct
+            # print 'train model %s, time spend = %d' % (model_choice, time.time()-start)
+        info += 'batch_size = %d, for each batch, avg_process_time = %.2f, avg_train_time = %.2f \n' % \
+                        (batch_size, float(process_time)/num_batch, float(train_time)/num_batch)
+        info += 'Train loss: %.3f | Acc: %.3f%% (%d/%d) \n' % \
+                (train_loss/num_batch, 100.0 * correct / num_batch / batch_size, correct, num_batch * batch_size)
+
+        info += test(net, (xtest, ytest), False)
+        print info
+        all_info += info
+
+    save_file = 'results/%s_bs%d_info.txt' % (model_choice, batch_size)
+    with open(save_file,'w') as f:
+        f.writelines(all_info)
 
 
 if __name__ == '__main__':
     args = main()
 
-    train_model(args, "cnn")
+    train_model(args, "lstm")
