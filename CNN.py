@@ -10,10 +10,11 @@ class cnn(nn.Module):
         Co = args.kernel_num
         Ks = args.kernel_size
         self.convs = nn.ModuleList([nn.Conv2d(Ci, Co, kernel_size=(K, args.feature_dim)) for K in Ks])
-
+        self.dropout = nn.Dropout(args.dropout)
+        self.fc1 = nn.Linear(len(Ks) * Co, args.cnn_out)
         # Attention Mechanism
         self.attn = nn.Linear(args.cnn_out, 1)
-        self.attn_softmax = nn.Softmax()
+        self.attn_softmax = nn.Softmax(dim=1)
 
         mlp_hidden = args.mlp_hidden
         mlp_hidden.insert(0, args.cnn_out)
@@ -34,8 +35,9 @@ class cnn(nn.Module):
 
         x = torch.cat(x, 1)  # (batch_size, len(Ks) * Co)
 
+        x = self.fc1(self.dropout(x))
         # attention
-        attn_weights = self.attn_softmax(self.attn(self.dropout(x)))
+        attn_weights = self.attn_softmax(self.attn(x))
         x = torch.sum(attn_weights * x, dim=1)
 
         # mlp prediction

@@ -26,7 +26,7 @@ def divide_dataset(filename):
         df['polarity'] = df['polarity'].apply(lambda x:x/2)
 
     texts = df['text'].tolist()
-    labels = df['polarity'].tolist()
+    labels = np.array(df['polarity'].tolist())
 
     num_examples = len(texts)
     row = int(num_examples * 0.8)
@@ -93,7 +93,7 @@ def w2v(word, model):
     try:
         return model[word]
     except:
-        return np.zeros((1, 400))
+        return np.zeros((400,))
 
 def tweet_preprocessing(tweets, model):
     '''

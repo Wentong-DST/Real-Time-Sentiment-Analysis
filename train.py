@@ -16,7 +16,7 @@ def train(net, train_data, use_cuda):
 
     if use_cuda:
         x, y = x.cuda(), y.cuda()
-
+    x, y = Variable(torch.Tensor(x)), Variable(torch.Tensor(y))
     optimizer.zero_grad()
     outputs = net(x)
     loss = criterion(outputs, y)

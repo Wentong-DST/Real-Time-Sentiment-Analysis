@@ -61,13 +61,14 @@ def train_model(args, model_choice):
     train_set, test_set = divide_dataset(filename)
 
     # loading word2vec model
-    model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
-    model = Word2Vec.load_word2vec_format(model_path, binary=True)
+    #model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
+    #model = Word2Vec.load_word2vec_format(model_path, binary=True)
+    model= []
     # train_set[0] = tweet_preprocessing(train_set[0], model)
 
     batch_size = args.batch_size
     xtrain, ytrain = train_set
-    num_batch = len(train_set[1]) / batch_size
+    num_batch = len(xtrain) / batch_size
     for i in range(num_batch):
         # get data for each batch
         x = xtrain[i*batch_size: (i+1)*batch_size]

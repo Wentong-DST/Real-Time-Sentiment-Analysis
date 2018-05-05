@@ -11,7 +11,7 @@ class lstm(nn.Module):
 
         # Attention Mechanism
         self.attn = nn.Linear(args.lstm_out*2, 1)
-        self.attn_softmax = nn.Softmax()
+        self.attn_softmax = nn.Softmax(dim=1)
 
         mlp_hidden = args.mlp_hidden
         mlp_hidden.insert(0, args.lstm_out*2)
