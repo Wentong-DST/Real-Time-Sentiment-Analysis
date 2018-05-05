@@ -27,7 +27,7 @@ class lstm(nn.Module):
         # x: (batch_size, seq_len, feature_dim)
 
         # lstm
-        x, _ = self.lstm(x)  # (batch_size, 1, lstm_out*2)
+        x, _ = self.lstm(x)  # (batch_size, seq, lstm_out*2)
 
         # attention
         attn_weights = self.attn_softmax(self.attn(self.dropout(x)))

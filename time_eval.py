@@ -69,43 +69,50 @@ def train_model(args, model_choice):
     xtrain, ytrain = train_set
     xtest, ytest = test_set
     xtest = tweet_preprocessing(xtest, model)
-    num_batch = len(xtrain) / batch_size
 
-    for epoch in range(args.max_epochs):
-        info = 'Epoch %d \n' % epoch
-        train_loss, train_correct = 0, 0
-        process_time, train_time = 0, 0
-        for i in range(num_batch):
-            # get data for each batch
-            x = xtrain[i*batch_size: (i+1)*batch_size]
-            y = ytrain[i*batch_size: (i+1)*batch_size]
 
-            # process data
-            start = time.time()
-            x = tweet_preprocessing(x, model)
-            process_time += (time.time() - start)
-            # print 'processing batch_size = %d, time spend = %d' % (batch_size, time.time()-start),
+    for batch_size in [2, 4, 8, 16, 32, 64, 128, 256]:
+        num_batch = len(xtrain) / batch_size
+        batchinfo = ''
+        for epoch in range(args.max_epochs):
+            info = 'Epoch %d \n' % epoch
+            train_loss, train_correct = 0, 0
+            process_time, train_time = 0, 0
+            for i in range(num_batch):
+                # get data for each batch
+                x = xtrain[i*batch_size: (i+1)*batch_size]
+                y = ytrain[i*batch_size: (i+1)*batch_size]
 
-            # simulate one batch
-            start = time.time()
-            loss, correct = train(net, (x,y), False)
-            train_time += (time.time() - start)
-            train_loss += loss
-            train_correct += correct
-            # print 'train model %s, time spend = %d' % (model_choice, time.time()-start)
-        info += 'batch_size = %d, for each batch, avg_process_time = %.2f, avg_train_time = %.2f \n' % \
-                        (batch_size, float(process_time)/num_batch, float(train_time)/num_batch)
-        info += 'Train loss: %.3f | Acc: %.3f%% (%d/%d) \n' % \
-                (train_loss/num_batch, 100.0 * correct / num_batch / batch_size, correct, num_batch * batch_size)
+                # process data
+                start = time.time()
+                x = tweet_preprocessing(x, model)
+                process_time += (time.time() - start)
+                # print 'processing batch_size = %d, time spend = %d' % (batch_size, time.time()-start),
 
-        info += test(net, (xtest, ytest), False)
-        print info
-        all_info += info
+                # simulate one batch
+                start = time.time()
+                loss, correct = train(net, (x,y), False)
+                train_time += (time.time() - start)
+                train_loss += loss
+                train_correct += correct
+                # print 'train model %s, time spend = %d' % (model_choice, time.time()-start)
+            info += 'batch_size = %d, for each batch, avg_process_time = %.4f, avg_train_time = %.4f \n' % \
+                            (batch_size, float(process_time)/num_batch, float(train_time)/num_batch)
+            info += 'Train loss: %.3f | Acc: %.3f%% (%d/%d) \n' % \
+                    (train_loss/num_batch, 100.0 * correct / num_batch / batch_size, correct, num_batch * batch_size)
 
-    save_file = 'results/%s_bs%d_info.txt' % (model_choice, batch_size)
-    with open(save_file,'w') as f:
-        f.writelines(all_info)
+            info += test(net, (xtest, ytest), False)
+            print info
+            all_info += info
 
+        save_file = 'results/%s_bs%d_info.txt' % (model_choice, batch_size)
+        with open(save_file,'w') as f:
+            f.writelines(all_info)
+
+        batchinfo += 'batch_size = %d, for each batch, avg_process_time = %.4f, avg_train_time = %.4f \n' % \
+                     (batch_size, float(process_time) / num_batch, float(train_time) / num_batch)
+    with open('results/batch-info.txt','w') as f:
+        f.writelines(batchinfo)
 
 if __name__ == '__main__':
     args = main()
