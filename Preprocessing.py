@@ -8,6 +8,12 @@ import pandas as pd
 from twokenize import simple_tokenize
 from word2vec_twitter_model.word2vecReader import Word2Vec
 
+def label_transfer(label):
+    if label == 0:
+        return [1, 0]
+    else:
+        return [0, 1]
+
 def divide_dataset(filename):
     if not os.path.exists(filename):
         print 'file %s does not exist. Please correct the name and try again.' % filename
@@ -22,11 +28,11 @@ def divide_dataset(filename):
     df = pd.read_csv(filename, index_col=1, names=columns, parse_dates=[2], date_parser=parser) # tweet id as index
     if len(set(df['polarity'])) == 2:
         df['polarity'] = df['polarity'].apply(lambda x:x/4)
-    elif len(set(df['polarity'])) == 3:
-        df['polarity'] = df['polarity'].apply(lambda x:x/2)
+    # elif len(set(df['polarity'])) == 3:
+    #     df['polarity'] = df['polarity'].apply(lambda x:x/2)
 
     texts = df['text'].tolist()
-    labels = np.array(df['polarity'].tolist())
+    labels = np.array(map(lambda l: label_transfer(l), df['polarity'].tolist()))
 
     num_examples = len(texts)
     row = int(num_examples * 0.8)
