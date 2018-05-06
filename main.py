@@ -1,7 +1,5 @@
 import torch
 import argparse
-from CNN import cnn
-from LSTM import lstm
 
 
 def main():
@@ -18,7 +16,7 @@ def main():
     parser.add_argument('--ratio', default=0.8, type=float, help='ratio of training dataset')
     parser.add_argument('--mlp_hidden', default='64,32', type=str, help='mlp hidden size')
     parser.add_argument('--num_classes', default=2, type=int, help='the number of classes')
-    parser.add_argument('--max_epochs', default=50, type=int, help='the number of epochs')
+    parser.add_argument('--max_epochs', default=10, type=int, help='the number of epochs')
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
     args = parser.parse_args()

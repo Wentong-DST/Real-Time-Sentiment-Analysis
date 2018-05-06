@@ -54,6 +54,8 @@ def train_model(args, model_choice):
         return
 
     all_info = 'Train model %s \n' % model_choice
+    if args.use_cuda:
+        net = net.cuda()
 
     # loading data and divide
     filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
@@ -67,17 +69,15 @@ def train_model(args, model_choice):
     model = Word2Vec.load_word2vec_format(model_path, binary=True)
     #model= []
     print 'loading model successfully. Time spend = ', time.time() - start
-    batch_size = args.batch_size
     xtrain, ytrain = train_set
     xtest, ytest = test_set
-    #xtest = tweet_preprocessing(xtest, model)
 
     batchinfo = ''
-    for batch_size in [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]:
+    for batch_size in [512, 1024, 2048, 4096, 9192, 256]:
         for epoch in range(args.max_epochs):
             info = 'Epoch %d \n' % epoch
             train_loss, train_correct = 0, 0
-            process_time, train_time = 0, 0
+
             train_num_batch = len(xtrain) / batch_size
             for i in range(train_num_batch):
                 # get data for each batch
@@ -85,38 +85,43 @@ def train_model(args, model_choice):
                 y = ytrain[i*batch_size: (i+1)*batch_size]
 
                 # process data
-                start = time.time()
                 x = tweet_preprocessing(x, model)
-                process_time += (time.time() - start)
                 # print 'processing batch_size = %d, time spend = %d' % (batch_size, time.time()-start),
 
                 # simulate one batch
-                start = time.time()
                 loss, correct = train(net, (x,y), args.use_cuda)
-                train_time += (time.time() - start)
                 train_loss += loss
                 train_correct += correct
                 # print 'train model %s, time spend = %d' % (model_choice, time.time()-start)
-            info += 'batch_size = %d, for each batch, avg_process_time = %.6f, avg_train_time = %.6f \n' % \
-                            (batch_size, float(process_time)/train_num_batch, float(train_time)/train_num_batch)
             info += 'Train loss: %.3f | Acc: %.3f%% (%d/%d) \n' % \
-                    (train_loss/train_num_batch, 100.0 * train_correct / train_num_batch / batch_size, train_correct, train_num_batch * batch_size)
+                    (train_loss / train_num_batch, 100.0 * train_correct / train_num_batch / batch_size, train_correct,
+                     train_num_batch * batch_size)
 
             test_loss, test_correct = 0, 0
+            process_time, test_time = 0, 0
             test_num_batch = len(xtest) / batch_size
             for i in range(test_num_batch):
                 # get data for each batch
                 x = xtest[i*batch_size: (i+1)*batch_size]
                 y = ytest[i*batch_size: (i+1)*batch_size]
 
+                # process data
+                start = time.time()
                 x = tweet_preprocessing(x, model)
+                process_time += (time.time() - start)
 
                 # simulate one batch
+                start = time.time()
                 loss, correct = test(net, (x,y), args.use_cuda)
+                test_time += (time.time() - start)
                 test_loss += loss
                 test_correct += correct
+
+
             info += 'Test loss: %.3f | Acc: %.3f%% (%d/%d) \n' % \
                     (test_loss/test_num_batch, 100.0 * test_correct / test_num_batch / batch_size, test_correct, test_num_batch * batch_size)
+            info += 'batch_size = %d, for each batch, avg_process_time = %.6f, avg_train_time = %.6f \n' % \
+                    (batch_size, float(process_time) / test_num_batch, float(test_time) / test_num_batch)
 
             print info
             all_info += info
@@ -126,9 +131,9 @@ def train_model(args, model_choice):
             f.writelines(all_info)
 
         batchinfo += 'batch_size = %d, for each batch, avg_process_time = %.6f, avg_train_time = %.6f \n' % \
-                     (batch_size, float(process_time) / train_num_batch, float(train_time) / train_num_batch) + \
+                     (batch_size, float(process_time) / train_num_batch, float(test_time) / train_num_batch) + \
                      '                 for each tweet, avg_process_time = %.6f, avg_train_time = %.6f \n' % \
-                     (float(process_time) / train_num_batch / batch_size, float(train_time) / train_num_batch / batch_size)
+                     (float(process_time) / train_num_batch / batch_size, float(test_time) / train_num_batch / batch_size)
     with open('results/batch-info.txt','w') as f:
         f.writelines(batchinfo)
 
