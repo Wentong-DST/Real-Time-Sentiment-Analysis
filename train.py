@@ -13,10 +13,10 @@ def train(net, train_data, use_cuda):
     total, correct = 0, 0
 
     x, y = train_data
-
+    x, y = Variable(torch.FloatTensor(x)), Variable(torch.Tensor(y))
     if use_cuda:
         x, y = x.cuda(), y.cuda()
-    x, y = Variable(torch.Tensor(x)), Variable(torch.Tensor(y))
+    
     optimizer.zero_grad()
     outputs = net(x)
     loss = criterion(outputs, y)
@@ -32,11 +32,11 @@ def test(net, test_data, use_cuda):
     net.eval()
     criterion = nn.MSELoss()
     x, y = test_data
-
+    
+    x, y = Variable(torch.FloatTensor(x)), Variable(torch.Tensor(y))
     if use_cuda:
         x, y = x.cuda(), y.cuda()
 
-    x, y = Variable(torch.Tensor(x)), Variable(torch.Tensor(y))
     outputs = net(x)
     loss = criterion(outputs, y)
 
@@ -45,9 +45,9 @@ def test(net, test_data, use_cuda):
     _, targets = torch.max(y.data, 1)
     correct = predicted.eq(targets).sum()
 
-    return 'Test loss: %.3f | Acc: %.3f%% (%d/%d) \n' % (
-        loss.item(), 100.0 * correct / total, correct, total)
-
+    # return 'Test loss: %.3f | Acc: %.3f%% (%d/%d) \n' % (
+    #     loss.item(), 100.0 * correct / total, correct, total)
+    return loss.item(), correct
 
 
 

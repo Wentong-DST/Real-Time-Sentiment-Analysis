@@ -26,7 +26,7 @@ def main():
     args.kernel_size = [int(k) for k in args.kernel_size.split(',')]
     args.mlp_hidden = [int(k) for k in args.mlp_hidden.split(',')]
     args.use_cuda = torch.cuda.is_available()
-    # args.use_cuda = False
+    #args.use_cuda = False
     print 'use_cuda = ', args.use_cuda
 
     return args

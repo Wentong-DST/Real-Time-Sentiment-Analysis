@@ -14,7 +14,7 @@ def label_transfer(label):
     else:
         return [0, 1]
 
-def divide_dataset(filename, ratio):
+def divide_dataset(filename, ratio, sample):
     if not os.path.exists(filename):
         print 'file %s does not exist. Please correct the name and try again.' % filename
 
@@ -25,7 +25,7 @@ def divide_dataset(filename, ratio):
 
     parser = lambda date: pd.datetime.strptime(date[:20]+date[24:], '%c')
     columns = ['polarity', 'id', 'date', 'query', 'user', 'text']
-    df = pd.read_csv(filename, index_col=1, names=columns, parse_dates=[2], date_parser=parser) # tweet id as index
+    df = pd.read_csv(filename, names=columns, parse_dates=[2], date_parser=parser) # tweet id as index
     categories = len(set(df['polarity']))
     if categories == 2:
         df['polarity'] = df['polarity'].apply(lambda x: x/4.0)
@@ -48,6 +48,8 @@ def divide_dataset(filename, ratio):
 
     train_idx = neg_idx.tolist()[:train_num_neg] + pos_idx.tolist()[:train_num_pos]
     test_idx = list(set(neg_idx.tolist() + pos_idx.tolist()) - set(train_idx))
+    train_idx = train_idx[:int(len(train_idx)*sample)]
+    test_idx = test_idx[:int(len(test_idx)*sample)]
     # shuffle train samples
     tmp = np.arange(len(train_idx))
     np.random.shuffle(tmp)
