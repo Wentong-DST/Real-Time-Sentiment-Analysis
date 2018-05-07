@@ -56,7 +56,8 @@ def divide_dataset(filename, ratio, sample):
     train_idx = np.array(train_idx)[tmp]
     train_texts = texts[train_idx]
     train_labels = labels[train_idx]
-    train_labels = np.array(map(lambda l: label_transfer(l), train_labels.tolist()))
+    #train_labels = np.array(map(lambda l: label_transfer(l), train_labels.tolist()))
+    train_labels = np.array(train_labels.tolist())
 
     # shuffle test samples
     tmp = np.arange(len(test_idx))
@@ -64,8 +65,8 @@ def divide_dataset(filename, ratio, sample):
     test_idx = np.array(test_idx)[tmp]
     test_texts = texts[test_idx]
     test_labels = labels[test_idx]
-    test_labels = np.array(map(lambda l: label_transfer(l), test_labels.tolist()))
-
+    #test_labels = np.array(map(lambda l: label_transfer(l), test_labels.tolist()))
+    test_labels = np.array(test_labels.tolist())
     return (train_texts, train_labels), (test_texts, test_labels)
 
 """

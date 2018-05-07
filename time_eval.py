@@ -6,7 +6,9 @@ from word2vec_twitter_model.word2vecReader import Word2Vec
 from Preprocessing import divide_dataset, tweet_preprocessing
 from train import train, test
 from main import main
+import os
 
+os.environ['CUDA_VISIBLE_DEVICES']="1"
 """
 def build_models(filename):
     print 'start to loading wiki corpus, ',
@@ -73,7 +75,7 @@ def train_model(args, model_choice):
     xtest, ytest = test_set
 
     batchinfo = ''
-    for batch_size in [512, 1024, 2048, 4096, 9192, 256]:
+    for batch_size in [256, 512, 1024]:
         for epoch in range(args.max_epochs):
             info = 'Epoch %d \n' % epoch
             train_loss, train_correct = 0, 0
@@ -120,7 +122,7 @@ def train_model(args, model_choice):
 
             info += 'Test loss: %.3f | Acc: %.3f%% (%d/%d) \n' % \
                     (test_loss/test_num_batch, 100.0 * test_correct / test_num_batch / batch_size, test_correct, test_num_batch * batch_size)
-            info += 'batch_size = %d, for each batch, avg_process_time = %.6f, avg_train_time = %.6f \n' % \
+            info += 'batch_size = %d, for each batch, avg_process_time = %.6f, avg_test_time = %.6f \n' % \
                     (batch_size, float(process_time) / test_num_batch, float(test_time) / test_num_batch)
 
             print info
@@ -130,10 +132,10 @@ def train_model(args, model_choice):
         with open(save_file,'w') as f:
             f.writelines(all_info)
 
-        batchinfo += 'batch_size = %d, for each batch, avg_process_time = %.6f, avg_train_time = %.6f \n' % \
-                     (batch_size, float(process_time) / train_num_batch, float(test_time) / train_num_batch) + \
-                     '                 for each tweet, avg_process_time = %.6f, avg_train_time = %.6f \n' % \
-                     (float(process_time) / train_num_batch / batch_size, float(test_time) / train_num_batch / batch_size)
+        batchinfo += 'batch_size = %d, for each batch, avg_process_time = %.6f, avg_test_time = %.6f \n' % \
+                     (batch_size, float(process_time) / test_num_batch, float(test_time) / test_num_batch) + \
+                     '                 for each tweet, avg_process_time = %.6f, avg_test_time = %.6f \n' % \
+                     (float(process_time) / test_num_batch / batch_size, float(test_time) / test_num_batch / batch_size)
     with open('results/batch-info.txt','w') as f:
         f.writelines(batchinfo)
 

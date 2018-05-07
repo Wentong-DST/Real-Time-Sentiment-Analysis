@@ -6,14 +6,14 @@ from torch.autograd import Variable
 
 def train(net, train_data, use_cuda):
     net.train()
-    criterion = nn.MSELoss()
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters())
 
     train_loss = 0
     total, correct = 0, 0
 
     x, y = train_data
-    x, y = Variable(torch.FloatTensor(x)), Variable(torch.Tensor(y))
+    x, y = Variable(torch.FloatTensor(x)), Variable(torch.LongTensor(y))
     if use_cuda:
         x, y = x.cuda(), y.cuda()
     
@@ -24,16 +24,17 @@ def train(net, train_data, use_cuda):
     optimizer.step()
 
     _, predicted = torch.max(outputs.data, 1)
-    _, targets = torch.max(y.data, 1)
+#    _, targets = torch.max(y.data, 1)
+    targets = y.data
     correct = predicted.eq(targets).sum()
     return loss.item(), correct
 
 def test(net, test_data, use_cuda):
     net.eval()
-    criterion = nn.MSELoss()
+    criterion = nn.CrossEntropyLoss()
     x, y = test_data
     
-    x, y = Variable(torch.FloatTensor(x)), Variable(torch.Tensor(y))
+    x, y = Variable(torch.FloatTensor(x)), Variable(torch.LongTensor(y))
     if use_cuda:
         x, y = x.cuda(), y.cuda()
 
@@ -42,7 +43,8 @@ def test(net, test_data, use_cuda):
 
     total = len(x)
     _, predicted = torch.max(outputs.data, 1)
-    _, targets = torch.max(y.data, 1)
+    #_, targets = torch.max(y.data, 1)
+    targets = y.data
     correct = predicted.eq(targets).sum()
 
     # return 'Test loss: %.3f | Acc: %.3f%% (%d/%d) \n' % (
