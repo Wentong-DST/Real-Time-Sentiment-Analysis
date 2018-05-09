@@ -40,18 +40,14 @@ def divide_dataset(filename, ratio, sample):
 
     train_idx = neg_idx.tolist()[:train_num_neg] + pos_idx.tolist()[:train_num_pos]
     test_idx = neg_idx.tolist()[train_num_neg: train_num_neg+test_num_neg] + pos_idx.tolist()[train_num_pos: train_num_pos+test_num_pos]
-    print 'train idx ', train_idx[-10:]
-    print 'test idx ', test_idx[-10:]
     train_idx = train_idx[:int(len(train_idx))]
     test_idx = test_idx[:int(len(test_idx))]
-    print np.array(labels[train_idx]).sum(), np.array(labels[test_idx]).sum()
     # shuffle train samples
     tmp = np.arange(len(train_idx))
     np.random.shuffle(tmp)
     train_idx = np.array(train_idx)[tmp]
     train_texts = texts[train_idx]
     train_labels = labels[train_idx]
-    print np.array(train_labels).sum()
     # train_labels = np.array(map(lambda l: label_transfer(l), train_labels.tolist()))
     train_labels = np.array(train_labels.tolist())
 
@@ -61,7 +57,6 @@ def divide_dataset(filename, ratio, sample):
     test_idx = np.array(test_idx)[tmp]
     test_texts = texts[test_idx]
     test_labels = labels[test_idx]
-    print np.array(test_labels).sum()
     # test_labels = np.array(map(lambda l: label_transfer(l), test_labels.tolist()))
     test_labels = np.array(test_labels.tolist())
     return (train_texts, train_labels), (test_texts, test_labels)
