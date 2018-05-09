@@ -5,10 +5,11 @@ from LSTM import lstm
 from word2vec_twitter_model.word2vecReader import Word2Vec
 from Preprocessing import divide_dataset, tweet_preprocessing
 from train import train, test
-from main import main
+from main import setup
 import os
+#from keras_model import LSTM_Keras
 
-os.environ['CUDA_VISIBLE_DEVICES']="1"
+os.environ['CUDA_VISIBLE_DEVICES']='1'
 """
 def build_models(filename):
     print 'start to loading wiki corpus, ',
@@ -87,7 +88,7 @@ def train_model(args, model_choice):
                 y = ytrain[i*batch_size: (i+1)*batch_size]
 
                 # process data
-                x = tweet_preprocessing(x, model)
+                x = tweet_preprocessing(x, model, args.max_len)
                 # print 'processing batch_size = %d, time spend = %d' % (batch_size, time.time()-start),
 
                 # simulate one batch
@@ -109,7 +110,7 @@ def train_model(args, model_choice):
 
                 # process data
                 start = time.time()
-                x = tweet_preprocessing(x, model)
+                x = tweet_preprocessing(x, model, args.max_len)
                 process_time += (time.time() - start)
 
                 # simulate one batch
@@ -140,6 +141,6 @@ def train_model(args, model_choice):
         f.writelines(batchinfo)
 
 if __name__ == '__main__':
-    args = main()
+    args = setup()
 
     train_model(args, "lstm")

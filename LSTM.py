@@ -18,8 +18,8 @@ class lstm(nn.Module):
         self.mlp = nn.Sequential()
         for i in range(len(mlp_hidden)-1):
             self.mlp.add_module('mlp'+str(i), nn.Linear(mlp_hidden[i], mlp_hidden[i+1]))
-            self.mlp.add_module('activ'+str(i), nn.Sigmoid())
-            self.mlp.add_module('dropout'+str(i), nn.Dropout(args.dropout))
+            self.mlp.add_module('activ'+str(i), nn.Tanh())
+            #self.mlp.add_module('dropout'+str(i), nn.Dropout(args.dropout))
         self.mlp.add_module('mlp'+str(i+1), nn.Linear(mlp_hidden[i+1], args.num_classes))
         self.mlp.add_module('softmax', nn.Softmax())
 
