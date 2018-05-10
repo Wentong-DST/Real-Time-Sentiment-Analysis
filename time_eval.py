@@ -1,22 +1,25 @@
 import time
 import cPickle
-from CNN import cnn
-from LSTM import lstm
+from models import CNN, LSTM, LSTM_CNN
 from word2vec_twitter_model.word2vecReader import Word2Vec
 from Preprocessing import divide_dataset, tweet_preprocessing
 from train import train, test
 from main import setup
 import os
-#from keras_model import LSTM_Keras
+"""
+This file is used to evaluate the external model
+"""
 
 os.environ['CUDA_VISIBLE_DEVICES']='1'
 
 
 def train_model(args, model_choice):
     if model_choice == "cnn":
-        net = cnn(args)
+        net = CNN.cnn(args)
     elif model_choice == "lstm":
-        net = lstm(args)
+        net = LSTM.lstm(args)
+    elif model_choice == "lstm_attn_cnn":
+        net = LSTM_CNN.lstm_attn_cnn(args)
     else:
         print "Wrong model_choice, please correct and try again."
         return
@@ -27,15 +30,15 @@ def train_model(args, model_choice):
 
     # loading data and divide
     filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
-    #filename = 'Sentiment140/testdata.manual.2009.06.14.csv'
-    train_set, test_set = divide_dataset(filename, 0.8, 0.1)
+    # filename = 'Sentiment140/testdata.manual.2009.06.14.csv'
+    train_set, test_set = divide_dataset(filename, args.ratio, args.sample)
     print 'trainset = %d, testset = %d' % (len(train_set[0]), len(test_set[0]))
 
     # loading word2vec model
     start = time.time()
-    model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
-    model = Word2Vec.load_word2vec_format(model_path, binary=True)
-    #model= []
+    # model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
+    # model = Word2Vec.load_word2vec_format(model_path, binary=True)
+    model= []
     print 'loading model successfully. Time spend = ', time.time() - start
     xtrain, ytrain = train_set
     xtest, ytest = test_set
@@ -107,5 +110,5 @@ def train_model(args, model_choice):
 
 if __name__ == '__main__':
     args = setup()
-
-    train_model(args, "cnn")
+    model_choice = {0: "cnn", 1: "lstm", 2: "lstm_attn_cnn"}
+    train_model(args, model_choice[2])

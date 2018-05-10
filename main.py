@@ -16,6 +16,7 @@ def setup():
     parser.add_argument('--lstm_out', default=70, type=int, help='lstm hidden size')
     parser.add_argument('--dropout', default=0.25, type=float, help='dropout probability')
     parser.add_argument('--ratio', default=0.8, type=float, help='ratio of training dataset')
+    parser.add_argument('--sample', default=0.1, type=float, help='sample of whole dataset')
     parser.add_argument('--mlp_hidden', default='64,32', type=str, help='mlp hidden size')
     parser.add_argument('--max_len', default=50, type=int, help='time step of lstm')
     parser.add_argument('--num_classes', default=2, type=int, help='the number of classes')
