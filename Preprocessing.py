@@ -3,7 +3,7 @@ import numpy as np
 import cPickle
 import pandas as pd
 from twokenize import simple_tokenize
-from word2vec_twitter_model.word2vecReader import Word2Vec
+#from word2vec_twitter_model.word2vecReader import Word2Vec
 
 def label_transfer(label):
     if label == 0:
@@ -152,6 +152,50 @@ def Texts2Index(texts, vocab, max_len):
     idxes = list(map(lambda idx: padding_1D(idx, max_len), idxes))
     return np.array(idxes)
 
+
+def same_users(users):
+    user_dict = dict()
+    for user in users:
+        if user_dict.has_key(user):
+            user_dict[user] += 1
+        else:
+            user_dict[user] = 1
+    print '#user = ', len(user_dict)
+    users = list()
+    for k, v in user_dict.items():
+        if v > 1:
+            users.append(k)
+    print 'after filtering, #user = ', len(users)
+    return users
+
+def evaluate_same_user(users, df):
+    diff = timedelta(hours=1)
+    same_senti, oppo_senti = 0, 0
+    same_file = 'same.txt'
+    oppo_file = 'oppo.txt'
+    same_ = pd.DataFrame(columns = ['polarity', 'id', 'date', 'query', 'user', 'text'])
+    oppo_ = pd.DataFrame(columns = ['polarity', 'id', 'date', 'query', 'user', 'text'])
+    for user in users:
+        user_msgs = df[df['user']==user]
+        idxes = user_msgs.index
+        for i in range(len(idxes)-1):
+            idx = idxes[i]
+            next_idx = idxes[i+1]
+            if user_msgs.loc[next_idx, 'date'] - user_msgs.loc[idx, 'date'] < diff :
+                if user_msgs.loc[next_idx, 'polarity'] == user_msgs.loc[idx, 'polarity']:
+                    same_senti += 1
+                    same_ = pd.concat([same_, user_msgs[idx: idx+1]])
+                else:
+                    oppo_senti += 1
+                    oppo_ = pd.concat([same_, user_msgs[idx: idx+1]])
+
+    same_.to_csv(same_file)
+    oppo_.to_csv(oppo_file)
+    print '#msg with same polarity in one hour = ', same_senti
+    print '#msg with oppo polarity in one hour = ', oppo_senti
+
+
+
 if __name__ == '__main__':
     # loading data and divide
     filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
@@ -161,8 +205,8 @@ if __name__ == '__main__':
     # model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
     # model = Word2Vec.load_word2vec_format(model_path, binary=True)
 
-    # # build vocabulary
-    # build_vocab(filename)
+    # build vocabulary
+    build_vocab(filename)
     # with open('vocab.pkl','r') as f:
     #     vocab = cPickle.load(f)
     #

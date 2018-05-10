@@ -10,42 +10,7 @@ import os
 #from keras_model import LSTM_Keras
 
 os.environ['CUDA_VISIBLE_DEVICES']='1'
-"""
-def build_models(filename):
-    print 'start to loading wiki corpus, ',
-    start = time.time()
-    wiki = wikicorpus.WikiCorpus(filename, lemmatize=False, dictionary={})
-    sentences = list(wiki.get_texts())
-    print 'time spent =', (time.time() - start)/60.0
-    print 'get wiki sentences successfully.'
-    start = time.time()
-    with open('wikis.pkl','w') as f:
-        cPickle.dump(sentences, f)
-    print 'save wiki sentences into file. ',
-    print 'time spent =', (time.time() - start)/60.0
 
-    # to build word2vec model
-    start = time.time()
-    params = {'size':200, 'window':10, 'min_count':10,
-              'workers': max(1, multiprocessing.cpu_count()-1)}
-    w2v = Word2Vec(sentences, **params)
-    w2v.save('w2v_model')
-    print 'save w2v model into file. ',
-    print 'time spent =', (time.time() - start)/60.0
-
-    # to build glove model
-    start = time.time()
-    glv_corpus = Corpus()
-    glv_corpus.fit(sentences, window=10)
-    glove = Glove(no_components=200)
-    glove.fit(glv_corpus.matrix, epochs=100,no_threads=max(1, multiprocessing.cpu_count()-1), verbose=True)
-    glove.save('glove_model')
-    print 'save glove model into file. ',
-    print 'time spent =', (time.time() - start)/60.0
-"""
-
-def load_model(filepath):
-    pass
 
 def train_model(args, model_choice):
     if model_choice == "cnn":
@@ -76,7 +41,7 @@ def train_model(args, model_choice):
     xtest, ytest = test_set
 
     batchinfo = ''
-    for batch_size in [256, 512, 1024]:
+    for batch_size in [256, 512, 1024, 2048,4096]:
         for epoch in range(args.max_epochs):
             info = 'Epoch %d \n' % epoch
             train_loss, train_correct = 0, 0
@@ -143,4 +108,4 @@ def train_model(args, model_choice):
 if __name__ == '__main__':
     args = setup()
 
-    train_model(args, "lstm")
+    train_model(args, "cnn")
