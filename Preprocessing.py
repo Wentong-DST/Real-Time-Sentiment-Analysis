@@ -4,6 +4,7 @@ import cPickle
 import pandas as pd
 from twokenize import simple_tokenize
 #from word2vec_twitter_model.word2vecReader import Word2Vec
+from datetime import timedelta
 
 def label_transfer(label):
     if label == 0:
@@ -168,14 +169,41 @@ def same_users(users):
     print 'after filtering, #user = ', len(users)
     return users
 
-def evaluate_same_user(users, df):
-    diff = timedelta(hours=1)
+def save_msg_to_csv(data, file, flag):
+    ''' save data into csv file, 
+        flag: 1: create a new file and keep header
+              0: append to file
+    '''
+    if flag:
+        if os.path.exists(file):
+            os.remove(file)
+            print 'remove %s' % file
+        data.to_csv(file)
+    else:
+        with open(file, 'a') as f:
+            data.to_csv(f, header=flag)
+
+
+def evaluate_same_user(filename):
+    parser = lambda date: pd.datetime.strptime(date[:20]+date[24:], '%c')
+    columns = ['polarity', 'id', 'date', 'query', 'user', 'text']
+    df = pd.read_csv(filename, names=columns, parse_dates=[2], date_parser=parser)
+    users = same_users(df['user'].tolist())
+    diff = timedelta(minutes=10)
     same_senti, oppo_senti = 0, 0
-    same_file = 'same.txt'
-    oppo_file = 'oppo.txt'
-    same_ = pd.DataFrame(columns = ['polarity', 'id', 'date', 'query', 'user', 'text'])
-    oppo_ = pd.DataFrame(columns = ['polarity', 'id', 'date', 'query', 'user', 'text'])
-    for user in users:
+    same_file, oppo_file = 'same.csv', 'oppo.csv'
+    same_ = pd.DataFrame(columns = columns)
+    oppo_ = pd.DataFrame(columns = columns)
+    save_msg_to_csv(same_, same_file, flag=1)
+    save_msg_to_csv(oppo_, oppo_file, flag=1)
+    # return
+    for uidx, user in enumerate(users):
+        if uidx != 0 and uidx % 200 == 0:
+            print '%d_th user. %d same polarity, %d opposity polarity' % (uidx, same_senti, oppo_senti)
+            save_msg_to_csv(same_, same_file, flag=0)
+            save_msg_to_csv(oppo_, oppo_file, flag=0)
+            same_ = pd.DataFrame(columns = columns)
+            oppo_ = pd.DataFrame(columns = columns)
         user_msgs = df[df['user']==user]
         idxes = user_msgs.index
         for i in range(len(idxes)-1):
@@ -184,33 +212,37 @@ def evaluate_same_user(users, df):
             if user_msgs.loc[next_idx, 'date'] - user_msgs.loc[idx, 'date'] < diff :
                 if user_msgs.loc[next_idx, 'polarity'] == user_msgs.loc[idx, 'polarity']:
                     same_senti += 1
-                    same_ = pd.concat([same_, user_msgs[idx: idx+1]])
+                    same_ = pd.concat([same_, user_msgs[i: i+2]])
                 else:
                     oppo_senti += 1
-                    oppo_ = pd.concat([same_, user_msgs[idx: idx+1]])
-
-    same_.to_csv(same_file)
-    oppo_.to_csv(oppo_file)
+                    oppo_ = pd.concat([same_, user_msgs[i: i+2]])
+    save_msg_to_csv(same_, same_file, flag=0)
+    save_msg_to_csv(oppo_, oppo_file, flag=0)
     print '#msg with same polarity in one hour = ', same_senti
     print '#msg with oppo polarity in one hour = ', oppo_senti
-
-
 
 if __name__ == '__main__':
     # loading data and divide
     filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
-    train_set, test_set = divide_dataset(filename, 0.8, 0.1)
-    #
+    # filename = 'Sentiment140/testdata.manual.2009.06.14.csv'
+    # train_set, test_set = divide_dataset(filename, 0.8, 0.1)
+
     # # loading word2vec model
     # model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
     # model = Word2Vec.load_word2vec_format(model_path, binary=True)
 
     # build vocabulary
-    build_vocab(filename)
+    # build_vocab(filename)
     # with open('vocab.pkl','r') as f:
     #     vocab = cPickle.load(f)
-    #
+
+    # test textw2index function
     # texts = ['today is a lovely day.', 'what\' your name?']
     # idx = Texts2Index(texts, vocab, 10)
     # print idx
+
+    # generate same polarity within short time
+    evaluate_same_user(filename)
+
+
 
