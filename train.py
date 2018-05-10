@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 
-def train(net, train_data, use_cuda, embad_flag=0):
+def train(net, train_data, use_cuda, embed_flag=0):
     net.train()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters())
@@ -13,12 +13,15 @@ def train(net, train_data, use_cuda, embad_flag=0):
     total, correct = 0, 0
 
     x, y = train_data
-    x, y = Variable(torch.FloatTensor(x)), Variable(torch.LongTensor(y))
+    if embed_flag:
+        x, y = Variable(torch.LongTensor(x)), Variable(torch.LongTensor(y))
+    else:
+        x, y = Variable(torch.FloatTensor(x)), Variable(torch.LongTensor(y))
     if use_cuda:
         x, y = x.cuda(), y.cuda()
     
     optimizer.zero_grad()
-    outputs = net(x, embad_flag)
+    outputs = net(x, embed_flag)
     loss = criterion(outputs, y)
     loss.backward()
     optimizer.step()
@@ -29,16 +32,19 @@ def train(net, train_data, use_cuda, embad_flag=0):
     correct = predicted.eq(targets).sum()
     return loss.item(), correct
 
-def test(net, test_data, use_cuda, embad_flag=0):
+def test(net, test_data, use_cuda, embed_flag=0):
     net.eval()
     criterion = nn.CrossEntropyLoss()
     x, y = test_data
     
-    x, y = Variable(torch.FloatTensor(x)), Variable(torch.LongTensor(y))
+    if embed_flag:
+        x, y = Variable(torch.LongTensor(x)), Variable(torch.LongTensor(y))
+    else:
+        x, y = Variable(torch.FloatTensor(x)), Variable(torch.LongTensor(y))
     if use_cuda:
         x, y = x.cuda(), y.cuda()
 
-    outputs = net(x, embad_flag)
+    outputs = net(x, embed_flag)
     loss = criterion(outputs, y)
 
     total = len(x)

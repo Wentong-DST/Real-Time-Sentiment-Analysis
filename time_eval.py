@@ -36,9 +36,9 @@ def train_model(args, model_choice):
 
     # loading word2vec model
     start = time.time()
-    # model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
-    # model = Word2Vec.load_word2vec_format(model_path, binary=True)
-    model= []
+    model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
+    model = Word2Vec.load_word2vec_format(model_path, binary=True)
+    # model= []
     print 'loading model successfully. Time spend = ', time.time() - start
     xtrain, ytrain = train_set
     xtest, ytest = test_set
