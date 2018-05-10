@@ -6,6 +6,8 @@ import torch.nn.functional as F
 class cnn(nn.Module):
     def __init__(self, args):
         super(cnn, self).__init__()
+        self.embed = nn.Embedding(args.vocab_size, args.feature_dim, padding_idx=0)
+
         Ci = 1
         Co = args.kernel_num
         Ks = args.kernel_size
@@ -26,7 +28,15 @@ class cnn(nn.Module):
         self.mlp.add_module('mlp' + str(i+1), nn.Linear(mlp_hidden[i+1], args.num_classes))
         self.mlp.add_module('softmax', nn.Softmax())
 
-    def forward(self, x):
+    def forward(self, x, embed=0):
+        '''
+        if embed, x with shape (batch_size, seq_len)
+        otherwise, x with shape (batch_size, seq_len, feature_dim)
+        '''
+
+        # whether embedding, 
+        if embed:
+            x = self.embed(x)   
         # x: (batch_size, seq_len, feature_dim)
         x = x.unsqueeze(1)  # (batch_size, 1, seq_len, feature_dim)
 

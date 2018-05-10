@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 
-def train(net, train_data, use_cuda):
+def train(net, train_data, use_cuda, embad_flag=0):
     net.train()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters())
@@ -18,7 +18,7 @@ def train(net, train_data, use_cuda):
         x, y = x.cuda(), y.cuda()
     
     optimizer.zero_grad()
-    outputs = net(x)
+    outputs = net(x, embad_flag)
     loss = criterion(outputs, y)
     loss.backward()
     optimizer.step()
@@ -29,7 +29,7 @@ def train(net, train_data, use_cuda):
     correct = predicted.eq(targets).sum()
     return loss.item(), correct
 
-def test(net, test_data, use_cuda):
+def test(net, test_data, use_cuda, embad_flag=0):
     net.eval()
     criterion = nn.CrossEntropyLoss()
     x, y = test_data
@@ -38,7 +38,7 @@ def test(net, test_data, use_cuda):
     if use_cuda:
         x, y = x.cuda(), y.cuda()
 
-    outputs = net(x)
+    outputs = net(x, embad_flag)
     loss = criterion(outputs, y)
 
     total = len(x)

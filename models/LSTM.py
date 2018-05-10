@@ -6,6 +6,8 @@ import torch.nn.functional as F
 class lstm(nn.Module):
     def __init__(self, args):
         super(lstm, self).__init__()
+        self.embed = nn.Embedding(args.vocab_size, args.feature_dim, padding_idx=0)
+        
         self.lstm = nn.LSTM(args.feature_dim, args.lstm_out, batch_first=True, bidirectional=True)
         self.dropout = nn.Dropout(args.dropout)
 
@@ -23,7 +25,15 @@ class lstm(nn.Module):
         self.mlp.add_module('mlp'+str(i+1), nn.Linear(mlp_hidden[i+1], args.num_classes))
         self.mlp.add_module('softmax', nn.Softmax())
 
-    def forward(self, x):
+    def forward(self, x, embed=0):
+        '''
+        if embed, x with shape (batch_size, seq_len)
+        otherwise, x with shape (batch_size, seq_len, feature_dim)
+        '''
+
+        # whether embedding, 
+        if embed:
+            x = self.embed(x)   
         # x: (batch_size, seq_len, feature_dim)
 
         # lstm
