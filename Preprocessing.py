@@ -3,7 +3,7 @@ import numpy as np
 import cPickle
 import pandas as pd
 from twokenize import simple_tokenize
-#from word2vec_twitter_model.word2vecReader import Word2Vec
+from word2vec_twitter_model.word2vecReader import Word2Vec
 from datetime import timedelta
 
 def label_transfer(label):
@@ -215,11 +215,35 @@ def evaluate_same_user(filename):
                     same_ = pd.concat([same_, user_msgs[i: i+2]])
                 else:
                     oppo_senti += 1
-                    oppo_ = pd.concat([same_, user_msgs[i: i+2]])
+                    oppo_ = pd.concat([oppo_, user_msgs[i: i+2]])
     save_msg_to_csv(same_, same_file, flag=0)
     save_msg_to_csv(oppo_, oppo_file, flag=0)
     print '#msg with same polarity in one hour = ', same_senti
     print '#msg with oppo polarity in one hour = ', oppo_senti
+
+def delete_unused_word():
+    print 'delete starting...'
+    model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
+    model = Word2Vec.load_word2vec_format(model_path, binary=True)
+    print 'Load model successfully.'
+
+    with open('vocab.pkl', 'r') as f:
+        vocab = cPickle.load(f)
+    keys = vocab.keys()
+    print 'Load vocab successfully.'
+
+    big_v = model.vocab
+    big_k = big_v.keys()
+
+    for i, k in enumerate(big_k):
+        if k not in keys:
+            del big_v[k]
+        if i%10000 == 0:
+            print 'finish %d_th words.' % i
+
+    with open('new_model.pkl','w') as f:
+        cPickle.dump(model, f)
+
 
 if __name__ == '__main__':
     # loading data and divide
@@ -241,8 +265,9 @@ if __name__ == '__main__':
     # idx = Texts2Index(texts, vocab, 10)
     # print idx
 
-    # generate same polarity within short time
-    evaluate_same_user(filename)
+    # # generate same polarity within short time
+    # evaluate_same_user(filename)
 
+    delete_unused_word()
 
 
