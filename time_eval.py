@@ -14,6 +14,23 @@ os.environ['CUDA_VISIBLE_DEVICES']='1'
 
 
 def train_model(args, model_choice):
+
+    # loading data and divide
+    filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
+    # filename = 'Sentiment140/testdata.manual.2009.06.14.csv'
+    train_set, test_set = divide_dataset(filename, args.ratio, args.sample)
+    print 'trainset = %d, testset = %d' % (len(train_set[0]), len(test_set[0]))
+
+    # loading word2vec model
+    start = time.time()
+    model_path = 'new_model.pkl'
+    with open(model_path, 'r') as f:
+        model = cPickle.load(f)
+    # model= []
+    print 'loading model successfully. Time spend = ', time.time() - start
+
+    args.vocab_size = len(model)
+
     if model_choice == "cnn":
         net = CNN.cnn(args)
     elif model_choice == "lstm":
@@ -28,18 +45,6 @@ def train_model(args, model_choice):
     if args.use_cuda:
         net = net.cuda()
 
-    # loading data and divide
-    filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
-    # filename = 'Sentiment140/testdata.manual.2009.06.14.csv'
-    train_set, test_set = divide_dataset(filename, args.ratio, args.sample)
-    print 'trainset = %d, testset = %d' % (len(train_set[0]), len(test_set[0]))
-
-    # loading word2vec model
-    start = time.time()
-    model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
-    model = Word2Vec.load_word2vec_format(model_path, binary=True)
-    # model= []
-    print 'loading model successfully. Time spend = ', time.time() - start
     xtrain, ytrain = train_set
     xtest, ytest = test_set
 
@@ -111,4 +116,5 @@ def train_model(args, model_choice):
 if __name__ == '__main__':
     args = setup()
     model_choice = {0: "cnn", 1: "lstm", 2: "lstm_attn_cnn"}
-    train_model(args, model_choice[2])
+    for k,v in model_choice.items():
+        train_model(args, v)

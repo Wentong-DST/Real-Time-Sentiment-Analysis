@@ -15,7 +15,6 @@ embed_flag = 1
 
 def train_model(args, model_choice):
 
-
 	# loading data and divide
 	filename = 'Sentiment140/training.1600000.processed.noemoticon.csv'
 	# filename = 'Sentiment140/testdata.manual.2009.06.14.csv'
@@ -123,4 +122,5 @@ def train_model(args, model_choice):
 if __name__ == '__main__':
     args = setup()
     model_choice = {0: "cnn", 1: "lstm", 2: "lstm_attn_cnn"}
-    train_model(args, model_choice[2])
+    for k, v in model_choice.items():
+	    train_model(args, v)

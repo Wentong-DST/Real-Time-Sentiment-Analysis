@@ -205,6 +205,7 @@ def evaluate_same_user(filename):
             same_ = pd.DataFrame(columns = columns)
             oppo_ = pd.DataFrame(columns = columns)
         user_msgs = df[df['user']==user]
+        user_msgs.sort_value('date', inplace=True)
         idxes = user_msgs.index
         for i in range(len(idxes)-1):
             idx = idxes[i]
@@ -241,8 +242,13 @@ def delete_unused_word():
         if i%10000 == 0:
             print 'finish %d_th words.' % i
 
+    new_dict = dict()
+    keys = model.vocab.keys()
+    for k in keys:
+        new_dict[k] = model[k]
+
     with open('new_model.pkl','w') as f:
-        cPickle.dump(model, f)
+        cPickle.dump(new_dict, f)
 
 
 if __name__ == '__main__':
@@ -270,4 +276,12 @@ if __name__ == '__main__':
 
     delete_unused_word()
 
+
+import time
+start = time.time()
+with open('new_model.pkl','rb') as f:
+    m = cp.load(f)
+
+
+print 'loading time = ', time.time() - start
 
