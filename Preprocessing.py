@@ -123,9 +123,4 @@ if __name__ == '__main__':
     # idx = Texts2Index(texts, vocab, 10)
     # print idx
 
-    # # generate same polarity within short time
-    # evaluate_same_user(filename)
-
-    delete_unused_word()
-
 

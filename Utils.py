@@ -2,9 +2,9 @@ import  os
 import numpy as np
 import cPickle
 import pandas as pd
-from twokenize import simple_tokenize
 from word2vec_twitter_model.word2vecReader import Word2Vec
 from datetime import timedelta
+import matplotlib.pyplot as plt
 
 
 def label_transfer(label):
@@ -62,19 +62,28 @@ def padding_1D(idx, max_len):
     return idx[:max_len]
 
 
-def same_users(users):
+def user_vs_msg(users):
+    '''
+    to get dict for {user_name: #msg_they_post}
+    :param users: list of username
+    '''
     user_dict = dict()
     for user in users:
         if user_dict.has_key(user):
             user_dict[user] += 1
         else:
             user_dict[user] = 1
-    print '#user = ', len(user_dict)
+    print 'In the dataset, #user = ', len(user_dict)
+
+def user_filter_by_msg_number(user_dict, threshold=1):
+    '''
+    to filter users whose posts not greater than threshold
+    '''
     users = list()
     for k, v in user_dict.items():
-        if v > 1:
+        if v > threshold:
             users.append(k)
-    print 'after filtering, #user = ', len(users)
+    print 'After filtering #msgs not greater than %d, #user = %d' % (threshold ,len(users))
     return users
 
 def save_msg_to_csv(data, file, flag):
@@ -92,11 +101,15 @@ def save_msg_to_csv(data, file, flag):
             data.to_csv(f, header=flag)
 
 
-def evaluate_same_user(filename):
+def evaluate_same_user_msg(filename):
+    '''
+    get users and save their msgs with same or opposite polarity in short interval into file
+    '''
     parser = lambda date: pd.datetime.strptime(date[:20]+date[24:], '%c')
     columns = ['polarity', 'id', 'date', 'query', 'user', 'text']
     df = pd.read_csv(filename, names=columns, parse_dates=[2], date_parser=parser)
-    users = same_users(df['user'].tolist())
+    user_dict = user_vs_msg(df['user'].tolist())
+    users = user_filter_by_msg_number(user_dict)
     diff = timedelta(minutes=10)
     same_senti, oppo_senti = 0, 0
     same_file, oppo_file = 'same.csv', 'oppo.csv'
@@ -131,6 +144,10 @@ def evaluate_same_user(filename):
     print '#msg with oppo polarity in one hour = ', oppo_senti
 
 def delete_unused_word():
+    '''
+    delete unused word in external model
+    :return:
+    '''
     print 'delete starting...'
     model_path = 'word2vec_twitter_model/word2vec_twitter_model.bin'
     model = Word2Vec.load_word2vec_format(model_path, binary=True)
@@ -158,7 +175,11 @@ def delete_unused_word():
     with open('new_model.pkl','w') as f:
         cPickle.dump(new_dict, f)
 
-def evaluate_polarity_from_same_user(filename):
+
+def plot_user_vs_time_interval_for_polarity(filename):
+    '''
+    plot histogram for users vs time_interval for same or opposite polarity in the file
+    '''
     parser = lambda date: pd.datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
     df = pd.read_csv(filename, usecols=[3], parse_dates=[0], date_parser=parser)
     df = df['date']
@@ -166,11 +187,27 @@ def evaluate_polarity_from_same_user(filename):
     for i in range(0,len(df),2):
         diff = (df[i+1]-df[i]).seconds
         diff_list.append(diff)
-
-    import matplotlib.pyplot as plt
     plt.hist(diff_list, bins=10, label = filename[:-4])
     plt.legend()
     plt.title('Histogram of same/opposity polarity')
     plt.xlabel('Seconds')
     plt.ylabel('Numbers')
     plt.savefig(filename[:-4])
+
+
+def plot_user_vs_msg(filename):
+    '''
+    plot histogram for users vs msgs they posted in the datset
+    :param filename:
+    :return:
+    '''
+    parser = lambda date: pd.datetime.strptime(date[:20] + date[24:], '%c')
+    columns = ['polarity', 'id', 'date', 'query', 'user', 'text']
+    df = pd.read_csv(filename, names=columns, parse_dates=[2], date_parser=parser)
+    user_dict = user_vs_msg(df['user'].tolist())
+    num_post = user_dict.values()
+    plt.hist(num_post, bins=range(25))
+    plt.title('Histogram of the number of tweets posted by each user')
+    plt.xlabel('#Tweets')
+    plt.ylabel('#Users')
+    plt.savefig('Hist_of_#tweets_vs_#users')
