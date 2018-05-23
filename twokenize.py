@@ -54,6 +54,9 @@ Num_RE = mycompile(regex_or(*[NumNum, NumberWithCommas, Num]))
 Mention = r'@[A-Za-z][A-Za-z0-9_-]*'
 Mention_RE = mycompile(Mention)
 
+Hashtag = r'#[A-Za-z0-9_-].'
+Hashtag_RE = mycompile(Hashtag)
+
 Abbrevs1 = ['am','pm','us','usa','ie','eg']
 def regexify_abbrev(a):
   chars = list(a)
@@ -137,7 +140,9 @@ def tokenize(tweet):
   t.alignments = align(t, text)
   return t
 
-def simple_tokenize(text):
+def simple_tokenize(text, lowercase=0):
+  if lowercase:
+      s = text.lower()
   s = text
   s = edge_punct_munge(s)
 
@@ -154,6 +159,8 @@ def simple_tokenize(text):
   if Num_RE.search(s):
     s = Num_RE.sub('_NUMBER_', s)
 
+  if Hashtag_RE.search(s):
+    s = Hashtag_RE.sub('_HASHTAG_', s)
 
   goods = []
   bads = []

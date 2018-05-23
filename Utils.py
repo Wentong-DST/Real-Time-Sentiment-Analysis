@@ -4,7 +4,10 @@ import cPickle
 import pandas as pd
 from word2vec_twitter_model.word2vecReader import Word2Vec
 from datetime import timedelta
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+from twokenize import simple_tokenize
+from nltk import pos_tag
+from collections import OrderedDict
 
 
 def label_transfer(label):
@@ -74,6 +77,7 @@ def user_vs_msg(users):
         else:
             user_dict[user] = 1
     print 'In the dataset, #user = ', len(user_dict)
+    return user_dict
 
 def user_filter_by_msg_number(user_dict, threshold=1):
     '''
@@ -176,23 +180,101 @@ def delete_unused_word():
         cPickle.dump(new_dict, f)
 
 
-def plot_user_vs_time_interval_for_polarity(filename):
+def load_polarity_dict(filename = 'SentiWords_1.1.txt'):
+    if not os.path.exists(filename):
+        print 'The polarity file %s does not exist. Please correct and try again.' % filename
+        return
+
+    polarity_dict = dict()
+    with open(filename,'r') as f:
+        for line in f:
+            word, polarity = line.split()
+            polarity_dict[word] = float(polarity)
+    return polarity_dict
+
+def word2Polarity(word, polar_dict):
+    try:
+        return polar_dict[word]
+    except:
+        return 0.0
+
+def svm_text_feature(text, stopwords_list, SentiWords):
+    '''
+    text is a list of word
+    '''
+    tags = pos_tag(text)
+    tags = list(filter(lambda word: word[0] in stopwords_list, tags))
+    # #pos for noun, adj, adv, verb
+    num_pos = [0, 0, 0, 0]
+    # #url, #mention, #hashtags, #number
+    num_icon = OrderedDict({'_URL_':0, '_MENTION_':0, '_HASHTAG_':0, '_NUMBER_':0})
+    icon = num_icon.keys()
+    num_cap = 0     # # of captialization
+    new_word_list = []
+    for (word, tag) in tags:
+        if word in icon:
+            num_icon[word] += 1
+            num_pos[0] += 1
+            continue
+        else:
+            if word.isupper():
+                num_cap += 1
+
+        if tag == 'NN':
+            num_pos[0] += 1
+            new_word_list.append(word+'#n')
+        elif tag == 'JJ':
+            num_pos[1] += 1
+            new_word_list.append(word + '#a')
+        elif tag == 'RB':
+            num_pos[2] += 1
+            new_word_list.append(word + '#r')
+        elif tag == 'VB':
+            num_pos[3] += 1
+            new_word_list.append(word + '#v')
+        else:
+            new_word_list.append(word + '#r')
+
+    polarities = np.array(list(map(lambda word: word2Polarity(word, SentiWords), new_word_list)))
+    # #polarity: strong neg, strong pos, weak neg, weak pos
+    num_polarity = []
+    num_polarity.append(len(np.where(polarities<-0.5)[0]))
+    num_polarity.append(len(np.where(polarities > 0.5)[0]))
+    num_polarity.append(len(np.where(polarities < 0)[0]) - num_polarity[0])
+    num_polarity.append(len(np.where(polarities > 0)[0]) - num_polarity[1])
+
+    return num_pos + num_icon.values() + [num_cap] + num_polarity
+
+
+"""
+def plot_user_vs_time_interval_for_polarity(filenames):
     '''
     plot histogram for users vs time_interval for same or opposite polarity in the file
     '''
-    parser = lambda date: pd.datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
-    df = pd.read_csv(filename, usecols=[3], parse_dates=[0], date_parser=parser)
-    df = df['date']
-    diff_list = []
-    for i in range(0,len(df),2):
-        diff = (df[i+1]-df[i]).seconds
-        diff_list.append(diff)
-    plt.hist(diff_list, bins=10, label = filename[:-4])
+    data, labels = [], []
+    for filename in filenames:
+        if filename.startswith('same'):
+            labels.append('same polarity')
+        elif filename.startswith('oppo'):
+            labels.append('opposity polarity')
+        else:
+            print 'get wrong filename %s' % filename
+            return
+        parser = lambda date: pd.datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+        df = pd.read_csv(filename, usecols=[3], parse_dates=[0], date_parser=parser)
+        df = df['date']
+        diff_list = []
+        for i in range(0,len(df),2):
+            diff = (df[i+1]-df[i]).seconds
+            diff_list.append(diff)
+        data.append(np.array(diff_list))
+    plt.hist(data, bins=10, label = labels)
     plt.legend()
+    plt.xticks(range(30,600,60), range(1,11))
     plt.title('Histogram of same/opposity polarity')
-    plt.xlabel('Seconds')
+    plt.xlabel('Minutes')
     plt.ylabel('Numbers')
-    plt.savefig(filename[:-4])
+    plt.savefig('Histogram_of_#user_vs_#minutes_for_polarity')
 
 
 def plot_user_vs_msg(filename):
@@ -211,3 +293,42 @@ def plot_user_vs_msg(filename):
     plt.xlabel('#Tweets')
     plt.ylabel('#Users')
     plt.savefig('Hist_of_#tweets_vs_#users')
+
+
+def evaluate_overlap_of_msg(filenames, overlap_choice=0):
+    '''
+    :param overlap_choice: 0: rate = #overlap_words/#all_words_in_two_msgs
+                           1: rate = #overlap_words/#all_words_in_first_msgs
+    :return:
+    '''
+    data, labels = [], []
+    for filename in filenames:
+        if filename.startswith('same'):
+            labels.append('same polarity')
+        elif filename.startswith('oppo'):
+            labels.append('opposity polarity')
+        else:
+            print 'get wrong filename %s' % filename
+            return
+        df = pd.read_csv(filename, usecols=[6])
+        df = df['text']
+        rate_list = []
+        for i in range(0, len(df), 2):
+            msg1, msg2 = df[i], df[i+1]
+            words1, words2 = simple_tokenize(msg1), simple_tokenize(msg2)
+            if overlap_choice == 0:
+                rate = 1.0 * len(set(words1)&set(words2)) / len(set(words1)|set(words2))
+            elif overlap_choice == 1:
+                rate = 1.0 * len(set(words1)&set(words2)) / len(set(words1))
+            rate_list.append(rate)
+        data.append(np.array(rate_list))
+    plt.hist(data, bins=10, label=labels)
+    plt.legend()
+    plt.xticks(np.arange(0,1.1,0.1))
+    plt.title('Histogram of overlap rate for same/opposity polarity')
+    plt.xlabel('Overlap Rate')
+    plt.ylabel('Numbers')
+    plt.savefig('Histogram_of_#tweets_vs_overlap_rate_for_polarity_'+str(overlap_choice))
+
+
+"""

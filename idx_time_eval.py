@@ -2,7 +2,7 @@ import time
 import cPickle
 from models import CNN, LSTM, LSTM_CNN
 from word2vec_twitter_model.word2vecReader import Word2Vec
-from Preprocessing import divide_dataset, Texts2Index, build_vocab
+from Preprocessing import divide_dataset, texts_preprocessing, build_vocab
 from main import setup
 from train import *
 import os
@@ -69,10 +69,10 @@ def train_model(args, model_choice):
 				y = ytrain[i*batch_size: (i+1)*batch_size]
 
 				# process data
-				x = Texts2Index(x, vocab, args.max_len)
+				x = texts_preprocessing(x, vocab, args.max_len, preprocess_choice="index")
 
 				# simulate one batch
-				loss, correct = train(net, (x, y), args.use_cuda, embed_flag)
+				loss, correct = train(net, (x, y), args, embed_flag)
 				train_loss += loss
 				train_correct += correct
 			# print 'train model %s, time spend = %d' % (model_choice, time.time()-start)
@@ -90,7 +90,7 @@ def train_model(args, model_choice):
 
 				# process data
 				start = time.time()
-				x = Texts2Index(x, vocab, args.max_len)
+				x = texts_preprocessing(x, vocab, args.max_len, preprocess_choice="index")
 				process_time += (time.time() - start)
 
 				# simulate one batch

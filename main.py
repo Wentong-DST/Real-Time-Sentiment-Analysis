@@ -23,12 +23,13 @@ def setup():
     parser.add_argument('--max_epochs', default=30, type=int, help='the number of epochs')
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
+    parser.add_argument('--vocab_size', default=70631, type=int, help='vocabulary size')
     args = parser.parse_args()
 
     args.kernel_size = [int(k) for k in args.kernel_size.split(',')]
     args.mlp_hidden = [int(k) for k in args.mlp_hidden.split(',')]
     args.use_cuda = torch.cuda.is_available()
-    #args.use_cuda = False
+    # args.use_cuda = False
     print 'use_cuda = ', args.use_cuda
 
     return args

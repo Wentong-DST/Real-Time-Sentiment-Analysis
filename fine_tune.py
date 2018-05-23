@@ -2,10 +2,12 @@ import time
 import cPickle
 from models import CNN, LSTM, LSTM_CNN
 from word2vec_twitter_model.word2vecReader import Word2Vec
-from Preprocessing import divide_dataset, texts_preprocessing
+from Preprocessing import divide_dataset, texts_preprocessing, model_update
 from train import train, test
 from main import setup
 import os
+import numpy as np
+
 """
 This file is used to evaluate the external model
 """
@@ -29,27 +31,17 @@ def train_model(args, model_choice):
     # model= []
     print 'loading model successfully. Time spend = ', time.time() - start
 
-    args.vocab_size = len(model)
-
-    if model_choice == "cnn":
-        net = CNN.cnn(args)
-    elif model_choice == "lstm":
-        net = LSTM.lstm(args)
-    elif model_choice == "lstm_attn_cnn":
-        net = LSTM_CNN.lstm_attn_cnn(args)
-    else:
-        print "Wrong model_choice, please correct and try again."
-        return
-
     all_info = 'Train model %s \n' % model_choice
-    if args.use_cuda:
-        net = net.cuda()
 
     xtrain, ytrain = train_set
     xtest, ytest = test_set
 
     batchinfo = ''
-    for batch_size in [256, 512, 1024, 2048,4096]:
+    for batch_size in [128, 256, 512, 1024, 2048,4096]:
+        print 'batch_size = ', batch_size
+        net = CNN.cnn(args)
+        if args.use_cuda:
+            net = net.cuda()
         for epoch in range(args.max_epochs):
             info = 'Epoch %d \n' % epoch
             train_loss, train_correct = 0, 0
@@ -57,18 +49,27 @@ def train_model(args, model_choice):
             train_num_batch = len(xtrain) / batch_size
             for i in range(train_num_batch):
                 # get data for each batch
-                x = xtrain[i*batch_size: (i+1)*batch_size]
-                y = ytrain[i*batch_size: (i+1)*batch_size]
+                x = xtrain[i * batch_size: (i + 1) * batch_size]
+                y = ytrain[i * batch_size: (i + 1) * batch_size]
 
-                # process data
-                _, x = texts_preprocessing(x, model, args.max_len, preprocess_choice="vector")
-                # print 'processing batch_size = %d, time spend = %d' % (batch_size, time.time()-start),
-
+                # process data to get word embedding
+                try:
+                    texts, x = texts_preprocessing(x, model, args.max_len, preprocess_choice="vector")
+                except:
+                    print 'epoch = ', epoch
+                    print type(x)
                 # simulate one batch
-                loss, correct = train(net, (x,y), args)
+                if epoch < 1:
+                    loss, correct = train(net, (x,y), args, fine_tune=False)
+                else:
+                    loss, correct, x = train(net, (x, y), args, fine_tune=True)
+                    model = model_update(model, texts, x)
+                    # print 'the differences = ', np.square(new_x[i]-x).sum()
                 train_loss += loss
                 train_correct += correct
                 # print 'train model %s, time spend = %d' % (model_choice, time.time()-start)
+
+
             info += 'Train loss: %.3f | Acc: %.3f%% (%d/%d) \n' % \
                     (train_loss / train_num_batch, 100.0 * train_correct / train_num_batch / batch_size, train_correct,
                      train_num_batch * batch_size)
@@ -116,5 +117,6 @@ def train_model(args, model_choice):
 if __name__ == '__main__':
     args = setup()
     model_choice = {0: "cnn", 1: "lstm", 2: "lstm_attn_cnn"}
-    for k,v in model_choice.items():
-        train_model(args, v)
+    # for k,v in model_choice.items():
+        # train_model(args, v)
+    train_model(args, model_choice[0])
