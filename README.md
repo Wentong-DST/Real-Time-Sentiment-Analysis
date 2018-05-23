@@ -48,6 +48,8 @@ We design three deep learning models to do binary classification, which are [CNN
 * time_eval.py: use word embedding to train/test model  
 * idx_time_eval.py: use one-hot vector to train/test model  
 * fine_tune.py: to fine-tune the word embeddings from existing model  
-Use ```Bash
+Use 
+```Bash
 python *.py
-``` to run relative file, and results would be saved into results/ folder.
+``` 
+to run relative file, and results would be saved into results/ folder.
